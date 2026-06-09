@@ -12,7 +12,7 @@ const config: Config = {
   },
 
   url: 'https://jradtke-rgs.github.io',
-  baseUrl: '/docs.carbide-enclave.kubernerdes.com/',
+  baseUrl: '/',
 
   organizationName: 'jradtke-rgs',
   projectName: 'docs.carbide-enclave.kubernerdes.com',
