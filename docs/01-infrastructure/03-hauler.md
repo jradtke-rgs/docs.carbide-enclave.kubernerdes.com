@@ -332,6 +332,30 @@ Harvester install and RKE2 bootstrap phases, before Harbor is available. Once Ha
 `hauler.sh push` has completed, Harbor is the authoritative registry. Stop the Hauler serve process
 after the push is confirmed.
 
+### The `step` CLI binary needs to be in the store
+
+`step` (the Smallstep CLI) is required on SL-Micro RKE2 nodes and the DGX Spark to bootstrap CA
+trust, but it is not available in any package repository for those OSes. In an airgap, it must
+come from Hauler or be served from nuc-00's Apache web root.
+
+Add both platform builds to a `Files` entry in `hauler.sh` (or copy them manually to
+`/srv/www/htdocs/step/` on nuc-00 pre-airgap):
+
+```yaml
+apiVersion: content.hauler.cattle.io/v1alpha1
+kind: Files
+metadata:
+  name: step-cli
+spec:
+  files:
+    - path: https://github.com/smallstep/cli/releases/download/v0.27.4/step_linux_0.27.4_amd64.tar.gz
+    - path: https://github.com/smallstep/cli/releases/download/v0.27.4/step_linux_0.27.4_arm64.tar.gz
+```
+
+After loading the store on the airgap side, extract the binaries from the tarballs and place them
+at `http://10.0.0.10/step/step-linux-amd64` and `http://10.0.0.10/step/step-linux-arm64` so
+nodes can fetch them without a package manager.
+
 ### Harvester government edition is not in the store
 
 The Harvester government edition (`v1.7.1-govt.2`) is placed manually on nuc-00's Apache web root
