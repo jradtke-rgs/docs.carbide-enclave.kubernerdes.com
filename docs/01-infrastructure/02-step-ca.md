@@ -179,30 +179,17 @@ on Harvester nodes** — Harvester manages its own OS and package state.
 Instead, inject the root CA certificate during the Harvester install via the node config, or add
 it post-install using `transactional-update`.
 
-#### Option 1 — inject via Harvester install config (preferred)
+#### Option 1 — post-install via Harvester UI (required)
 
-Embed the root CA PEM in the Harvester `os.write_files` section. step-ca must be bootstrapped on
-nuc-00 before generating Harvester node configs, which it is (CA bootstrap is step 1; Harvester
-install is step 4).
+Harvester does not support injecting additional CA certificates during the install/iPXE phase.
+Trust must be added after the cluster is up via the Harvester UI or `kubectl`.
 
-Add to `config-create-nuc-01.yaml` (and the join configs):
+In the Harvester UI: **Settings → containerd-registry** → add the CA under the appropriate
+registry hostname (e.g. `harbor.carbide-enclave.kubernerdes.com`).
 
-```yaml
-os:
-  write_files:
-    - path: /etc/pki/trust/anchors/carbide-enclave-root-ca.crt
-      permissions: '0644'
-      content: |
-        -----BEGIN CERTIFICATE-----
-        <paste root_ca.crt PEM here>
-        -----END CERTIFICATE-----
-  after_install_chroot_commands:
-    - update-ca-certificates
+The root CA cert is served from nuc-00 at:
 ```
-
-Get the PEM from nuc-00:
-```bash
-sudo cat /etc/step-ca/certs/root_ca.crt
+http://10.0.0.10/step/carbide-enclave-root-ca.crt
 ```
 
 #### Option 2 — post-install via transactional-update
