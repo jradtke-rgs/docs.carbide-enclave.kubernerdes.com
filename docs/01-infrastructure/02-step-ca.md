@@ -111,8 +111,9 @@ All client bootstraps require the root CA fingerprint. Retrieve it from nuc-00:
 sudo step certificate fingerprint /etc/step-ca/certs/root_ca.crt
 ```
 
-Or, since the root cert is also served over HTTP from nuc-00 (plain HTTP is acceptable here
-because the fingerprint check prevents MITM):
+Or, since nuc-00 is the trusted airgap boundary host and you control it entirely, the root cert
+can also be fetched over plain HTTP — the fingerprint verification in `step ca bootstrap` confirms
+the cert matches what you expect, regardless of transport:
 
 ```bash
 # Fetch the cert and compute its fingerprint locally
