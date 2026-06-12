@@ -125,8 +125,14 @@ curl -sk https://ca.carbide-enclave.kubernerdes.com:8443/roots.pem \
 
 ### Scenario A — SL-Micro hosts (RKE2 VMs)
 
-RKE2 VM guests run SL-Micro. These nodes need the CA trusted system-wide so that RKE2, containerd,
-and any host-level tooling work correctly with internal TLS endpoints.
+:::note Automated — no manual steps needed
+`bootstrap-rke2.sh` handles CA trust on the RKE2 VMs automatically. It SCPs the root cert
+from nuc-00 and runs `update-ca-certificates` on each node before installing RKE2. You do not
+need to install the `step` CLI on these nodes.
+:::
+
+The manual procedure below applies to any SL-Micro host **not** covered by a bootstrap script —
+for example, a one-off node added to the enclave after initial cluster standup.
 
 `/etc` on SL-Micro is a writable overlay — no `transactional-update` is required for trust store
 changes. `/usr/local/bin` is also writable in the RKE2 deployment configuration.
@@ -141,8 +147,7 @@ chmod 755 /usr/local/bin/step
 **Step 2 — bootstrap and install the root CA:**
 
 The `--install` flag writes the root cert to `/etc/pki/trust/anchors/` and calls
-`update-ca-certificates` automatically. This is the equivalent of manually placing the cert in
-the trust anchor directory.
+`update-ca-certificates` automatically.
 
 ```bash
 step ca bootstrap \
@@ -156,9 +161,6 @@ step ca bootstrap \
 ```bash
 # System trust (curl should succeed without -k)
 curl -s https://ca.carbide-enclave.kubernerdes.com:8443/health
-
-# step config written
-cat ~/.step/config/defaults.json
 ```
 
 :::note Root vs non-root
@@ -292,7 +294,7 @@ file /usr/local/bin/step
 | Host type | `step` CLI | System trust store | containerd trust | Method |
 |---|---|---|---|---|
 | nuc-00 (bastion) | Yes — installed by bootstrap script | Yes — bootstrap script | n/a | `bootstrap-step-ca.sh` |
-| SL-Micro RKE2 VMs | Yes — from Apache | Yes — `step ca bootstrap --install` | Via system trust | Scenario A |
+| SL-Micro RKE2 VMs | No — `bootstrap-rke2.sh` handles it | Yes — automated via `bootstrap-rke2.sh` | Via system trust | Scenario A (automated) |
 | Harvester nodes | No | Yes — inject via install config or `transactional-update` | Explicit `ca_file` in registries.yaml | Scenario B |
 | RKE2 workloads | No | n/a | n/a (cert-manager handles) | Scenario C |
 | DGX Spark (arm64) | Yes — arm64 build | Yes — `step ca bootstrap --install` | Via system trust | Scenario D |
